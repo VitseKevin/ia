@@ -7,3 +7,4 @@ __pycache__/
 .gradio/
 ollama.log
 .ipynb_checkpoints/
+.venv/

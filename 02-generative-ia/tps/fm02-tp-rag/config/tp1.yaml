@@ -1,10 +1,10 @@
 # TP 1 : configuration du chatbot RAG.
-# TODO : choisir la stratégie, la taille et le chevauchement des chunks, puis
-# justifier ce choix dans le README (section « Justification du chunking »).
+# Chunking par sections Markdown, 600 caractères, chevauchement 80 : voir la
+# justification chiffrée dans le README (section « Justification du chunking »).
 name: tp1
-chunking: fixed           # "fixed" ou "markdown"
-chunk_size: 500           # en caractères
-chunk_overlap: 50
+chunking: markdown        # "fixed" ou "markdown"
+chunk_size: 600           # en caractères
+chunk_overlap: 80
 embedding_model: BAAI/bge-m3
 top_k: 3
 rerank: false

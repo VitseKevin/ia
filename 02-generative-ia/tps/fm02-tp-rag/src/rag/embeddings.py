@@ -42,9 +42,13 @@ class Embedder:
         return len(self.embed_query("test"))
 
     def embed_documents(self, texts: list[str]) -> np.ndarray:
-        # TODO : encoder les textes avec self.model.encode (normalize_embeddings=True) ; pour un modèle e5, préfixer chaque texte par "passage: "
-        raise NotImplementedError("TODO : encoder les textes avec self.model.encode (normalize_embeddings=Tru...")
+        if self.is_e5:
+            texts = [f"passage: {t}" for t in texts]
+        return self.model.encode(texts, batch_size=self.batch_size, normalize_embeddings=True,
+                                 convert_to_numpy=True, show_progress_bar=False)
 
     def embed_query(self, text: str) -> np.ndarray:
-        # TODO : encoder la question avec le même modèle (préfixe "query: " pour e5), normalize_embeddings=True
-        raise NotImplementedError("TODO : encoder la question avec le même modèle (préfixe 'query: ' pour e5)...")
+        if self.is_e5:
+            text = f"query: {text}"
+        return self.model.encode(text, normalize_embeddings=True, convert_to_numpy=True,
+                                 show_progress_bar=False)

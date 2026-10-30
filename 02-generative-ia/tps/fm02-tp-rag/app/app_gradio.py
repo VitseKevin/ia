@@ -31,8 +31,12 @@ from rag.pipeline import RAGAnswer, RAGPipeline  # noqa: E402
 
 def format_answer(res: RAGAnswer) -> str:
     """Réponse + liste des sources consultées + temps de réponse, en Markdown."""
-    # TODO : renvoyer la réponse suivie d'une section « Sources » (fichier, page, score) et des latences
-    raise NotImplementedError("TODO : renvoyer la réponse suivie d'une section « Sources » (fichier, page...")
+    lines = [res.answer, "", "**Sources**"]
+    for n, c in enumerate(res.sources, 1):
+        page = f", p. {c.metadata['page']}" if c.metadata.get("page") else ""
+        lines.append(f"- [{n}] `{c.metadata.get('source', '?')}`{page} · score {c.score:.3f}")
+    lines += ["", f"_Recherche {res.retrieval_s:.2f} s · génération {res.generation_s:.2f} s · {res.model}_"]
+    return "\n".join(lines)
 
 
 def build_app(pipe: RAGPipeline) -> gr.ChatInterface:

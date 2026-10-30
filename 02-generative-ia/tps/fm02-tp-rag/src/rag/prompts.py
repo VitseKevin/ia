@@ -27,8 +27,13 @@ Règles :
 
 def format_context(chunks: list[RetrievedChunk]) -> str:
     """Numérote les chunks [1], [2]... et indique leur source (et page pour un PDF)."""
-    # TODO : produire un bloc par chunk : "[n] (source: <fichier>, p. <page>)" puis le texte du chunk ; blocs séparés par une ligne vide
-    raise NotImplementedError("TODO : produire un bloc par chunk : '[n] (source: <fichier>, p. <page>)' p...")
+    blocks = []
+    for n, c in enumerate(chunks, 1):
+        header = f"[{n}] (source: {c.metadata.get('source', '?')}"
+        if c.metadata.get("page"):
+            header += f", p. {c.metadata['page']}"
+        blocks.append(f"{header})\n{c.text}")
+    return "\n\n".join(blocks)
 
 
 def build_user_prompt(question: str, chunks: list[RetrievedChunk]) -> str:

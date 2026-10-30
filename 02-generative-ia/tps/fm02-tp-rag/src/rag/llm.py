@@ -57,8 +57,17 @@ class OllamaLLM:
         return self.model in names or f"{self.model}:latest" in names
 
     def generate(self, system: str, user: str) -> LLMResponse:
-        # TODO : appeler self.client.chat avec un message system et un message user, options temperature et num_predict, think=False ; renvoyer un LLMResponse (texte nettoyé, latence, prompt_eval_count, eval_count)
-        raise NotImplementedError("TODO : appeler self.client.chat avec un message system et un message user,...")
+        t0 = time.perf_counter()
+        resp = self.client.chat(
+            model=self.model,
+            messages=[{"role": "system", "content": system}, {"role": "user", "content": user}],
+            options={"temperature": self.temperature, "num_predict": self.max_tokens},
+            think=False,
+        )
+        latency = time.perf_counter() - t0
+        return LLMResponse(text=strip_thinking(resp.message.content), model=f"ollama/{self.model}",
+                           latency_s=latency, prompt_tokens=resp.prompt_eval_count,
+                           completion_tokens=resp.eval_count)
 
 
 class GeminiLLM:

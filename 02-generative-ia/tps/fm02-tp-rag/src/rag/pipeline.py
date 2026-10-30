@@ -104,8 +104,14 @@ class RAGPipeline:
     @tracing.observe(name="rag-ask")
     def ask(self, question: str) -> RAGAnswer:
         """Question -> recherche -> prompt -> réponse ancrée, avec mesures de latence."""
-        # TODO : chronométrer self.retrieve puis self.generate et construire un RAGAnswer complet (réponse, sources, modèle, latences, tokens)
-        raise NotImplementedError("TODO : chronométrer self.retrieve puis self.generate et construire un RAGA...")
+        t0 = time.perf_counter()
+        chunks = self.retrieve(question)
+        t1 = time.perf_counter()
+        resp = self.generate(question, chunks)
+        t2 = time.perf_counter()
+        result = RAGAnswer(question=question, answer=resp.text, sources=chunks, model=resp.model,
+                           retrieval_s=t1 - t0, generation_s=t2 - t1,
+                           prompt_tokens=resp.prompt_tokens, completion_tokens=resp.completion_tokens)
         tracing.update_span(input=question, output=result.answer,
                             metadata={"config": self.cfg.name, "sources": result.source_files})
         return result

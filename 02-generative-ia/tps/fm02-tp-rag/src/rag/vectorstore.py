@@ -64,15 +64,26 @@ class ChromaStore:
 
     def add_chunks(self, chunks: list[Chunk], batch_size: int = 128) -> int:
         """Vectorise et insère (upsert) les chunks par lots. Renvoie le nombre de chunks."""
-        # TODO : par lots de batch_size, calculer les embeddings des textes puis collection.upsert(ids, embeddings, documents, metadatas)
-        raise NotImplementedError("TODO : par lots de batch_size, calculer les embeddings des textes puis col...")
+        for i in range(0, len(chunks), batch_size):
+            batch = chunks[i:i + batch_size]
+            texts = [c.text for c in batch]
+            embeddings = self.embedder.embed_documents(texts)
+            self.collection.upsert(ids=[c.id for c in batch],
+                                   embeddings=[list(map(float, e)) for e in embeddings],
+                                   documents=texts,
+                                   metadatas=[self._clean_meta(c.metadata) for c in batch])
+        return len(chunks)
 
     def search(self, query: str, k: int = 3) -> list[RetrievedChunk]:
         """Renvoie les k chunks les plus proches de la question, du plus au moins similaire."""
         if self.count() == 0:
             raise RuntimeError("La collection est vide : lancez d'abord l'indexation.")
-        # TODO : encoder la question, interroger la collection (n_results=k) puis construire des RetrievedChunk avec score = 1 - distance
-        raise NotImplementedError("TODO : encoder la question, interroger la collection (n_results=k) puis co...")
+        q = self.embedder.embed_query(query)
+        res = self.collection.query(query_embeddings=[list(map(float, q))], n_results=min(k, self.count()),
+                                    include=["documents", "metadatas", "distances"])
+        return [RetrievedChunk(id=i, text=d, metadata=m or {}, score=1.0 - float(dist), rank=r)
+                for r, (i, d, m, dist) in enumerate(zip(res["ids"][0], res["documents"][0],
+                                                        res["metadatas"][0], res["distances"][0]), 1)]
 
     def all_chunks(self) -> list[RetrievedChunk]:
         """Tous les chunks indexés (utile pour BM25 en recherche hybride)."""

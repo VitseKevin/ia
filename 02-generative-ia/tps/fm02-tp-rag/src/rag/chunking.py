@@ -56,8 +56,21 @@ def fixed_size_chunks(text: str, size: int, overlap: int) -> list[str]:
     text = text.strip()
     if not text:
         return []
-    # TODO : avancer par fenêtres de `size` caractères, couper proprement avec _cut_position, puis repartir `overlap` caractères avant la fin du morceau
-    raise NotImplementedError("TODO : avancer par fenêtres de `size` caractères, couper proprement avec _...")
+    chunks, start = [], 0
+    while start < len(text):
+        cut = _cut_position(text, start, min(start + size, len(text)))
+        piece = text[start:cut].strip()
+        if piece:
+            chunks.append(piece)
+        if cut >= len(text):
+            break
+        # on repart `overlap` caractères avant la coupure, sans recommencer au milieu d'un mot
+        nxt = max(cut - overlap, start + 1)
+        if overlap and nxt < cut and not text[nxt - 1].isspace():
+            space = text.find(" ", nxt, cut)
+            nxt = space + 1 if space != -1 else nxt
+        start = nxt
+    return chunks
 
 
 HEADING = re.compile(r"^(#{1,6})\s+(.+)$", re.MULTILINE)

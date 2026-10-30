@@ -26,7 +26,15 @@ Avancez étape par étape : `python -m pytest -m "not tp2 and not bonus"` vérif
 
 ## Justification du chunking (TP 1, à compléter)
 
-_Stratégie, taille, chevauchement retenus, et 3 à 5 arguments chiffrés._
+**Choix retenu** (`config/tp1.yaml`) : stratégie `markdown` (découpage par sections, puis taille fixe si une section dépasse), `chunk_size: 600` caractères, `chunk_overlap: 80`. Résultat sur le corpus : **52 chunks**, taille médiane 340, min 137, max 590 caractères.
+
+1. **Le corpus est structuré en sections courtes** : 5 des 7 documents (md et html converti) sont découpés en 39 sections, de taille médiane ≈ 310 caractères. Une section = une règle (« 5. Absences pour maladie », « Plafonds hôtel »…) : c'est l'unité de sens naturelle à récupérer.
+2. **Le découpage fixe mélange les sujets** : en `fixed` 500, 34 chunks sur 41 issus des documents md/html contiennent la fin d'une section et le début de la suivante. Exemple : le chunk qui contient `RH-07` commence par « …comme acceptée. Un refus doit être motivé par écrit. » (fin de la section congés) avant « ## 5. Absences pour maladie ». En `markdown`, ce chunk commence par le titre « 5. Absences pour maladie », qui est en plus répété dans le texte vectorisé.
+3. **600 caractères évite presque toutes les coupures de section** : seules 2 sections sur 39 dépassent 600 caractères et sont redécoupées, contre 7 à 500 et 11 à 400. Au-delà (700 : 1 section coupée), le gain est marginal mais les chunks des documents non structurés (PDF, txt) grossissent et diluent le signal.
+4. **Le coût en contexte reste faible** : avec top-k 3, le contexte envoyé au LLM fait au plus ≈ 1 800 caractères (≈ 500 tokens). C'est important ici : `qwen3:8b` tourne sur CPU, et la lecture du prompt représente une bonne part de la latence. bge-m3 accepte 8 192 tokens, la taille n'est donc pas limitée par le modèle d'embedding.
+5. **Le chevauchement de 80 caractères (≈ 13 %)** ne sert que pour les sections redécoupées et pour le PDF et le txt, qui n'ont pas de titres Markdown et sont découpés en taille fixe : il permet de retrouver une phrase coupée entre deux chunks (par exemple une ligne du tableau des plafonds).
+
+Limite connue : `07_formation_continue.txt` utilise des titres en majuscules (« 2. DEMANDE DE FORMATION ») que le découpage Markdown ne reconnaît pas ; il est donc découpé en taille fixe.
 
 ## Arborescence
 
